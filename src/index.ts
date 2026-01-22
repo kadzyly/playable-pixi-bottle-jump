@@ -9,10 +9,10 @@ sdk.init((width: number, height: number) => {
 
   // Set up all event listeners
   sdk.on('resize', game.resize, game);
-  sdk.on('pause', game.pause, game);
-  sdk.on('resume', game.resume, game);
-  sdk.on('volume', game.volume, game);
-  sdk.on('finish', game.finish, game);
+  // sdk.on('pause', game.pause, game);
+  // sdk.on('resume', game.resume, game);
+  // sdk.on('volume', game.volume, game);
+  // sdk.on('finish', game.finish, game);
 });
 
 if (__DEV__) {
