@@ -17,48 +17,6 @@ export class MainScene {
     this.setupInteraction();
   }
 
-  private createBackground(): void {
-    const texture = PIXI.Assets.get('bg');
-    texture.source.addressModeX = 'repeat';
-
-    this.background = new PIXI.TilingSprite({
-      texture,
-      width: 1,
-      height: texture.height
-    });
-
-    // position: left bottom
-    this.background.anchor.set(0, 1);
-    this.app.stage.addChild(this.background);
-  }
-
-  private createEntities(): void {
-    this.shelf = new Shelf();
-    this.sofa = new Sofa();
-    this.character = new Character();
-
-    this.app.stage.addChild(this.shelf, this.sofa, this.character);
-  }
-
-  private setupInteraction(): void {
-    this.app.stage.eventMode = 'static';
-    this.app.stage.hitArea = this.app.screen;
-
-    this.app.stage.on('pointerdown', () => this.onClick());
-
-    sdk.start();
-  }
-
-  private onClick(): void {
-    if (this.interactionCount === 0) {
-      this.character.position.copyFrom(this.sofa.position);
-    } else {
-      sdk.install();
-    }
-
-    this.interactionCount++;
-  }
-
   public resize(width: number, height: number): void {
     if (!this.background) return;
 
@@ -87,7 +45,7 @@ export class MainScene {
     this.shelf.x = width * 0.25;
     this.shelf.placeOn(floorY - shelfOffset);
 
-    this.sofa.x = width * 0.70;
+    this.sofa.x = width * 0.7;
     this.sofa.placeOn(floorY - sofaOffset);
 
     // character position
@@ -98,5 +56,58 @@ export class MainScene {
       this.character.x = this.sofa.x;
       this.character.placeOn(this.sofa.y);
     }
+  }
+
+  private createBackground(): void {
+    const texture = PIXI.Assets.get('bg');
+    texture.source.addressModeX = 'repeat';
+
+    this.background = new PIXI.TilingSprite({
+      texture,
+      width: 1,
+      height: texture.height
+    });
+
+    // position: left bottom
+    this.background.anchor.set(0, 1);
+    this.app.stage.addChild(this.background);
+  }
+
+  private createEntities(): void {
+    this.shelf = new Shelf();
+    this.sofa = new Sofa();
+    this.character = new Character(this.app);
+
+    this.app.stage.addChild(this.shelf, this.sofa, this.character);
+  }
+
+  private setupInteraction(): void {
+    this.app.stage.eventMode = 'static';
+    this.app.stage.hitArea = this.app.screen;
+
+    this.app.stage.on('pointerdown', () => this.onClick());
+
+    sdk.start();
+  }
+
+  private onClick(): void {
+    if (this.interactionCount === 0) {
+      // find coordinates for character to jump from shelf to sofa
+      const fromX = this.character.x;
+      const fromY = this.character.y;
+      const toX = this.sofa.x;
+
+      // find the Y position before jump
+      const tempY = this.character.y;
+      this.character.placeOn(this.sofa.y);
+      const toY = this.character.y;
+      this.character.y = tempY;
+
+      this.character.jumpToSofa(fromX, fromY, toX, toY, 1000);
+    } else {
+      sdk.install();
+    }
+
+    this.interactionCount++;
   }
 }
