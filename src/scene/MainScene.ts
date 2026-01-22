@@ -67,12 +67,14 @@ export class MainScene {
     const scale = Math.min(width / 400, height / 600) * 0.5;
 
     this.shelf.position.set(width * 0.25, height * 0.45);
-    this.sofa.position.set(width * 0.75, height * 0.8);
+    this.sofa.position.set(width * 0.75, height * 0.60);
 
     if (this.interactionCount === 0) {
-      this.character.position.copyFrom(this.shelf.position);
+      this.character.x = this.shelf.x;
+      this.character.placeOn(this.shelf.y);
     } else {
-      this.character.position.copyFrom(this.sofa.position);
+      this.character.x = this.sofa.x;
+      this.character.placeOn(this.sofa.y);
     }
 
     this.character.scale.set(scale);
