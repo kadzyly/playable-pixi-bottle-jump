@@ -1,12 +1,18 @@
 import { sdk } from '@smoud/playable-sdk';
 import * as PIXI from 'pixi.js';
 // Using assets/* alias configured in tsconfig.json for direct assets import
-import buttonBg from 'assets/button.png';
+import charAsset from 'assets/character.png';
+import shelfAsset from 'assets/shelf.png';
+import sofaAsset from 'assets/chair.png';
+import bgSegment from 'assets/BG_seg.png';
 
 export class Game {
   private app: PIXI.Application;
-  private installButton: PIXI.Container;
-  private buttonTexture: PIXI.Texture;
+  private background: PIXI.TilingSprite;
+  private character: PIXI.Sprite;
+  private shelf: PIXI.Sprite;
+  private sofa: PIXI.Sprite;
+  private interactionCount: number = 0;
 
   constructor(width: number, height: number) {
     // Create PIXI application
@@ -16,55 +22,65 @@ export class Game {
       .init({
         width,
         height,
-        backgroundColor: 0x1c1c1c,
+        backgroundColor: 0x87CEEB,
         resolution: 1.5,
         autoDensity: true
       })
       .then(() => {
         document.body.appendChild(this.app.canvas);
 
-        // Load texture and create game
-        PIXI.Assets.load(buttonBg).then((texture) => {
-          this.buttonTexture = texture;
+        // Load textures and create game
+        const assets = [
+          { alias: 'bgTexture', src: bgSegment },
+          { alias: 'char', src: charAsset },
+          { alias: 'shelf', src: shelfAsset },
+          { alias: 'sofa', src: sofaAsset }
+        ];
+
+        PIXI.Assets.load(assets).then(() => {
           this.create();
         });
       });
   }
 
   public create(): void {
-    this.installButton = new PIXI.Container();
-    this.installButton.eventMode = 'static';
-    this.installButton.cursor = 'pointer';
-    this.app.stage.addChild(this.installButton);
-
-    // Create button sprite
-    const buttonBackground = new PIXI.Sprite(this.buttonTexture);
-    buttonBackground.anchor.set(0.5);
-    buttonBackground.scale.set(0.35);
-    this.installButton.addChild(buttonBackground);
-
-    // Create text
-    const installText = new PIXI.Text({
-      text: 'Install',
-      style: new PIXI.TextStyle({
-        fontFamily: 'cursive',
-        fontSize: 35,
-        fill: 0xffffff,
-        fontWeight: 'bold',
-        dropShadow: {
-          color: 0xfffc6a,
-          alpha: 0.63,
-          blur: 9,
-          distance: 4,
-          angle: Math.PI / 6
-        }
-      })
+    const bgTexture = PIXI.Assets.get('bgTexture');
+    bgTexture.source.addressModeX = 'repeat';
+    bgTexture.source.addressModeY = 'clamp';
+    this.background = new PIXI.TilingSprite({
+      texture: bgTexture,
+      width: this.app.screen.width,
+      height: bgTexture.height,
     });
-    installText.anchor.set(0.5);
-    this.installButton.addChild(installText);
+    this.background.anchor.set(0, 1);
+    this.app.stage.addChildAt(this.background, 0);
 
-    // Add click handler
-    this.installButton.on('pointerdown', () => sdk.install());
+    // 1. shelf
+    this.shelf = new PIXI.Sprite(PIXI.Assets.get('shelf'));
+    this.shelf.anchor.set(0.5, 1);
+    this.app.stage.addChild(this.shelf);
+
+
+    // 2. sofa
+    this.sofa = new PIXI.Sprite(PIXI.Assets.get('sofa'));
+    this.sofa.anchor.set(0.5, 1);
+    this.app.stage.addChild(this.sofa);
+
+
+    // 3. character
+    this.character = new PIXI.Sprite(PIXI.Assets.get('char'));
+    this.character.anchor.set(0.5, 1);
+    this.app.stage.addChild(this.character);
+
+
+    this.resize(this.app.screen.width, this.app.screen.height);
+
+
+    // 4. global click
+    this.app.stage.eventMode = 'static';
+    this.app.stage.hitArea = this.app.screen; // Кликабельная вся область
+
+    this.app.stage.on('pointerdown', () => this.handleGlobalClick());
 
     // Set up interaction listener
     sdk.on('interaction', (count: number) => {
@@ -78,19 +94,56 @@ export class Game {
     sdk.start();
   }
 
+  private handleGlobalClick(): void {
+    if (this.interactionCount === 0) {
+      // TODO add jump animation here
+      this.character.x = this.sofa.x;
+      this.character.y = this.sofa.y;
+    } else {
+      sdk.install();
+    }
+    this.interactionCount++;
+  }
+
   public resize(width: number, height: number): void {
-    // Resize the application
     this.app.renderer.resize(width, height);
+    this.app.stage.hitArea = new PIXI.Rectangle(0, 0, width, height);
 
-    // Calculate scale based on screen dimensions
-    const scaleX = width / 320;
-    const scaleY = height / 480;
-    const scale = Math.min(scaleX, scaleY); // Use smaller scale to fit both dimensions
+    if (this.background) {
+      this.background.width = width;
+      this.background.height = height;
+      this.background.y = height;
 
-    // Update button and text positions and scale
-    if (this.installButton) {
-      this.installButton.position.set(width / 2, height / 2);
-      this.installButton.scale.set(scale);
+      const bgScale = height / this.background.texture.source.height;
+      this.background.tileScale.set(bgScale);
+
+      this.background.tilePosition.y = 0;
+    }
+
+    // update click area
+    this.app.stage.hitArea = new PIXI.Rectangle(0, 0, width, height);
+
+    if (this.character && this.shelf && this.sofa) {
+      this.shelf.x = width * 0.25;
+      this.shelf.y = height * 0.45;
+
+      this.sofa.x = width * 0.75;
+      this.sofa.y = height * 0.8;
+
+      // before jump
+      if (this.interactionCount === 0) {
+        this.character.x = this.shelf.x;
+        this.character.y = this.shelf.y;
+      } else {
+        // after jump
+        this.character.x = this.sofa.x;
+        this.character.y = this.sofa.y;
+      }
+
+      const scale = Math.min(width / 400, height / 600) * 0.5;
+      this.character.scale.set(scale);
+      this.shelf.scale.set(scale);
+      this.sofa.scale.set(scale);
     }
   }
 
