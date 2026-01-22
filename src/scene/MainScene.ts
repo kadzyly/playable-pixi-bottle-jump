@@ -27,6 +27,7 @@ export class MainScene {
       height: texture.height
     });
 
+    // left bottom
     this.background.anchor.set(0, 1);
     this.app.stage.addChild(this.background);
   }
@@ -61,10 +62,13 @@ export class MainScene {
   public resize(width: number, height: number): void {
     if (!this.background) return;
 
-    this.background.width = width;
-    this.background.y = height;
+    const scale = height / this.background.texture.height;
+    this.background.scale.set(scale);
 
-    const scale = Math.min(width / 400, height / 600) * 0.5;
+    this.background.width = width / scale;
+    this.background.position.set(0, height);
+
+    const entityScale = Math.min(width / 400, height / 600) * 0.5;
 
     this.shelf.position.set(width * 0.25, height * 0.45);
     this.sofa.position.set(width * 0.75, height * 0.60);
@@ -77,8 +81,8 @@ export class MainScene {
       this.character.placeOn(this.sofa.y);
     }
 
-    this.character.scale.set(scale);
-    this.shelf.scale.set(scale);
-    this.sofa.scale.set(scale);
+    this.character.scale.set(entityScale);
+    this.shelf.scale.set(entityScale);
+    this.sofa.scale.set(entityScale);
   }
 }
