@@ -79,6 +79,11 @@ export class MainScene {
     // calculate scale
     const entityScale = Math.min(width / 400, height / 600) * 0.5;
 
+    // scale
+    this.character.scale.set(entityScale);
+    this.shelf.scale.set(entityScale);
+    this.sofa.scale.set(entityScale);
+
     this.shelf.x = width * 0.25;
     this.shelf.placeOn(floorY - shelfOffset);
 
@@ -93,10 +98,5 @@ export class MainScene {
       this.character.x = this.sofa.x;
       this.character.placeOn(this.sofa.y);
     }
-
-    // scale
-    this.character.scale.set(entityScale);
-    this.shelf.scale.set(entityScale);
-    this.sofa.scale.set(entityScale);
   }
 }
