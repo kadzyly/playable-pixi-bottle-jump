@@ -1,4 +1,6 @@
-export const imposterData = {
+import type { SpritesheetData } from 'pixi.js';
+
+export const imposterData: SpritesheetData = {
   frames: {
     'imp_0.png': {
       frame: { x: 0, y: 0, w: 150, h: 150 },

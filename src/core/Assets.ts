@@ -19,10 +19,7 @@ export async function loadAssets(): Promise<void> {
 
   const texture = PIXI.Assets.get('imposterTexture');
 
-  const spritesheet = new PIXI.Spritesheet(
-    texture,
-    imposterData as any // Передаем наш объект
-  );
+  const spritesheet = new PIXI.Spritesheet(texture, imposterData);
 
   await spritesheet.parse();
 
