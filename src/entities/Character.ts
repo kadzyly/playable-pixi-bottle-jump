@@ -1,7 +1,7 @@
 import * as PIXI from 'pixi.js';
 
 export class Character extends PIXI.Sprite {
-  private readonly footOffsetY = -12;
+  private readonly footOffsetY = -20;
 
   constructor() {
     super(PIXI.Assets.get('char'));

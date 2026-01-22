@@ -5,4 +5,8 @@ export class Sofa extends PIXI.Sprite {
     super(PIXI.Assets.get('sofa'));
     this.anchor.set(0.5, 0);
   }
+
+  placeOn(surfaceY: number): void {
+    this.y = surfaceY;
+  }
 }

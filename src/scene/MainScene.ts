@@ -27,7 +27,7 @@ export class MainScene {
       height: texture.height
     });
 
-    // left bottom
+    // position: left bottom
     this.background.anchor.set(0, 1);
     this.app.stage.addChild(this.background);
   }
@@ -62,17 +62,30 @@ export class MainScene {
   public resize(width: number, height: number): void {
     if (!this.background) return;
 
-    const scale = height / this.background.texture.height;
-    this.background.scale.set(scale);
-
-    this.background.width = width / scale;
+    // background
+    const bgScale = height / this.background.texture.height;
+    this.background.scale.set(bgScale);
+    this.background.width = width / bgScale;
     this.background.position.set(0, height);
 
+    // floor
+    const floorHeightOnBackgroundImage = 367;
+    const floorY = height - floorHeightOnBackgroundImage * bgScale;
+
+    // offsets
+    const shelfOffset = 350 * bgScale;
+    const sofaOffset = 200 * bgScale;
+
+    // calculate scale
     const entityScale = Math.min(width / 400, height / 600) * 0.5;
 
-    this.shelf.position.set(width * 0.25, height * 0.45);
-    this.sofa.position.set(width * 0.75, height * 0.60);
+    this.shelf.x = width * 0.25;
+    this.shelf.placeOn(floorY - shelfOffset);
 
+    this.sofa.x = width * 0.70;
+    this.sofa.placeOn(floorY - sofaOffset);
+
+    // character position
     if (this.interactionCount === 0) {
       this.character.x = this.shelf.x;
       this.character.placeOn(this.shelf.y);
@@ -81,6 +94,7 @@ export class MainScene {
       this.character.placeOn(this.sofa.y);
     }
 
+    // scale
     this.character.scale.set(entityScale);
     this.shelf.scale.set(entityScale);
     this.sofa.scale.set(entityScale);
