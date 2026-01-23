@@ -3,6 +3,7 @@ import { sdk } from '@smoud/playable-sdk';
 import { Character } from '../entities/Character';
 import { Shelf } from '../entities/Shelf';
 import { Sofa } from '../entities/Sofa';
+import { Dust } from '../entities/Dust';
 
 export class MainScene {
   private background: PIXI.TilingSprite;
@@ -90,6 +91,16 @@ export class MainScene {
     sdk.start();
   }
 
+  private spawnDustUnderCharacter(x: number, y: number): void {
+    const dust = new Dust();
+    const scale = this.character.scale.x;
+
+    const characterIndex = this.app.stage.getChildIndex(this.character);
+    this.app.stage.addChildAt(dust, Math.max(0, characterIndex));
+
+    dust.playAt(x, y, scale);
+  }
+
   private onClick(): void {
     if (this.interactionCount === 0) {
       // find coordinates for character to jump from shelf to sofa
@@ -101,7 +112,9 @@ export class MainScene {
       const toY = this.character.y;
       this.character.y = tempY;
 
-      this.character.jumpTo(toX, toY);
+      void this.character.jumpTo(toX, toY).then(() => {
+        this.spawnDustUnderCharacter(this.character.x, this.character.y);
+      });
     } else {
       sdk.install();
     }
