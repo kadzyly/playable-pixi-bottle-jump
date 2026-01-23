@@ -93,8 +93,6 @@ export class MainScene {
   private onClick(): void {
     if (this.interactionCount === 0) {
       // find coordinates for character to jump from shelf to sofa
-      const fromX = this.character.x;
-      const fromY = this.character.y;
       const toX = this.sofa.x;
 
       // find the Y position before jump
