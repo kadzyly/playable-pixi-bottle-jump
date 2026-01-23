@@ -4,7 +4,10 @@
   "description": "A starter template for creating playable ads using PixiJS and @smoud/playable-sdk with TypeScript support",
   "scripts": {
     "dev": "playable-scripts dev",
-    "build": "playable-scripts build"
+    "build": "playable-scripts build",
+    "predeploy": "npm run build",
+    "prebuild": "rd /s /q dist || mkdir dist",
+    "deploy": "ren dist\\\\*.html index.html && gh-pages -d dist"
   },
   "keywords": [
     "playable",
@@ -20,6 +23,7 @@
   "author": "Smoud",
   "dependencies": {
     "@smoud/playable-sdk": "^1.0.23",
+    "gh-pages": "^6.3.0",
     "pixi.js": "^8.8.1"
   },
   "devDependencies": {
