@@ -3,12 +3,25 @@ import * as PIXI from 'pixi.js';
 export class Character extends PIXI.AnimatedSprite {
   private readonly footOffsetY = -20;
   private isJumping = false;
+  private idleTextures: PIXI.Texture[];
+  private jumpTextures: PIXI.Texture[];
 
   constructor(app?: PIXI.Application) {
     const spritesheet = PIXI.Cache.get('imposterSheet') as PIXI.Spritesheet;
 
-    const textures: PIXI.Texture[] = [];
-    const frameNames = [
+    // idle animation
+    const idleTextures: PIXI.Texture[] = [];
+    const idleFrameNames = ['imp_7.png', 'imp_8.png'];
+    for (const frameName of idleFrameNames) {
+      const texture = spritesheet.textures[frameName];
+      if (texture) {
+        idleTextures.push(texture);
+      }
+    }
+
+    // jump animation
+    const jumpTextures: PIXI.Texture[] = [];
+    const jumpFrameNames = [
       'imp_0.png',
       'imp_1.png',
       'imp_2.png',
@@ -30,17 +43,33 @@ export class Character extends PIXI.AnimatedSprite {
       'imp_18.png'
     ];
 
-    for (const frameName of frameNames) {
+    for (const frameName of jumpFrameNames) {
       const texture = spritesheet.textures[frameName];
       if (texture) {
-        textures.push(texture);
+        jumpTextures.push(texture);
       }
     }
 
-    super(textures);
+    // start idle animation
+    super(idleTextures);
+    this.idleTextures = idleTextures;
+    this.jumpTextures = jumpTextures;
     this.anchor.set(0.5, 1);
-    this.animationSpeed = 0.3;
+    this.animationSpeed = 0.08;
     this.play();
+  }
+
+  setState(state: 'idle' | 'jump'): void {
+    if (state === 'idle') {
+      this.textures = this.idleTextures;
+      this.animationSpeed = 0.08;
+      this.loop = true;
+    } else if (state === 'jump') {
+      this.textures = this.jumpTextures;
+      this.animationSpeed = 0.5;
+      this.loop = true;
+    }
+    this.gotoAndPlay(0);
   }
 
   placeOn(surfaceY: number): void {
@@ -52,14 +81,13 @@ export class Character extends PIXI.AnimatedSprite {
 
     this.isJumping = true;
 
+    this.setState('jump');
+
     // anchor center for jump
     this.anchor.set(0.5, 0.5);
     const halfHeight = this.height / 2;
     const startYAdjusted = fromY - halfHeight;
     const endYAdjusted = toY - halfHeight;
-
-    this.animationSpeed = 0.5;
-    this.play();
 
     const startTime = performance.now();
 
@@ -79,8 +107,8 @@ export class Character extends PIXI.AnimatedSprite {
           this.x = toX;
           this.y = toY;
           this.rotation = 0;
-          this.animationSpeed = 0.3;
-          this.gotoAndStop(0);
+
+          this.setState('idle');
           this.isJumping = false;
 
           resolve();
