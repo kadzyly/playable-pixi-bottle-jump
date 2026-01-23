@@ -128,11 +128,10 @@ export class MainScene {
     if (this.interactionCount === 0) {
       // find coordinates for character to jump from shelf to sofa
       const toX = this.sofa.x;
-      const toY = this.sofa.y - this.sofa.height;
-
-      // find the Y position before jump
       const tempY = this.character.y;
-      this.character.placeOn(toY);
+      const sofaTopSurfaceY = this.sofa.y - this.sofa.height;
+      this.character.placeOn(sofaTopSurfaceY);
+      const toY = this.character.y;
       this.character.y = tempY;
 
       void this.character.jumpTo(toX, toY).then(() => {
