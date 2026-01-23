@@ -1,74 +1,35 @@
 import * as PIXI from 'pixi.js';
+import { JumpAnimator, JumpConfig } from './JumpAnimator';
+import { CHARACTER_ANIMATIONS } from './CharacterConfig';
+
+type CharacterState = keyof typeof CHARACTER_ANIMATIONS;
 
 export class Character extends PIXI.AnimatedSprite {
   private readonly footOffsetY = -20;
   private isJumping = false;
-  private idleTextures: PIXI.Texture[];
-  private jumpTextures: PIXI.Texture[];
+  private textureCache: Record<string, PIXI.Texture[]> = {};
 
-  constructor(app?: PIXI.Application) {
-    const spritesheet = PIXI.Cache.get('imposterSheet') as PIXI.Spritesheet;
+  constructor() {
+    const sheet = PIXI.Cache.get('imposterSheet') as PIXI.Spritesheet;
 
-    // idle animation
-    const idleTextures: PIXI.Texture[] = [];
-    const idleFrameNames = ['imp_7.png', 'imp_8.png'];
-    for (const frameName of idleFrameNames) {
-      const texture = spritesheet.textures[frameName];
-      if (texture) {
-        idleTextures.push(texture);
-      }
-    }
+    // init with a default texture first
+    super([PIXI.Texture.EMPTY]);
 
-    // jump animation
-    const jumpTextures: PIXI.Texture[] = [];
-    const jumpFrameNames = [
-      'imp_0.png',
-      'imp_1.png',
-      'imp_2.png',
-      'imp_3.png',
-      'imp_4.png',
-      'imp_5.png',
-      'imp_6.png',
-      'imp_7.png',
-      'imp_8.png',
-      'imp_9.png',
-      'imp_10.png',
-      'imp_11.png',
-      'imp_12.png',
-      'imp_13.png',
-      'imp_14.png',
-      'imp_15.png',
-      'imp_16.png',
-      'imp_17.png',
-      'imp_18.png'
-    ];
+    (Object.keys(CHARACTER_ANIMATIONS) as CharacterState[]).forEach((state) => {
+      this.textureCache[state] = CHARACTER_ANIMATIONS[state].frames.map((frame) => sheet.textures[frame]).filter(Boolean);
+    });
 
-    for (const frameName of jumpFrameNames) {
-      const texture = spritesheet.textures[frameName];
-      if (texture) {
-        jumpTextures.push(texture);
-      }
-    }
-
-    // start idle animation
-    super(idleTextures);
-    this.idleTextures = idleTextures;
-    this.jumpTextures = jumpTextures;
+    // update textures after init
+    this.textures = this.textureCache['idle'];
     this.anchor.set(0.5, 1);
-    this.animationSpeed = 0.08;
-    this.play();
+    this.setState('idle');
   }
 
-  setState(state: 'idle' | 'jump'): void {
-    if (state === 'idle') {
-      this.textures = this.idleTextures;
-      this.animationSpeed = 0.08;
-      this.loop = true;
-    } else if (state === 'jump') {
-      this.textures = this.jumpTextures;
-      this.animationSpeed = 0.5;
-      this.loop = true;
-    }
+  public setState(state: CharacterState): void {
+    const config = CHARACTER_ANIMATIONS[state];
+    this.textures = this.textureCache[state];
+    this.animationSpeed = config.speed;
+    this.loop = config.loop;
     this.gotoAndPlay(0);
   }
 
@@ -76,64 +37,57 @@ export class Character extends PIXI.AnimatedSprite {
     this.y = surfaceY - this.footOffsetY * this.scale.y;
   }
 
-  async jumpToSofa(fromX: number, fromY: number, toX: number, toY: number, duration: number = 1000): Promise<void> {
+  public async jumpTo(targetX: number, targetY: number, duration: number = 1000): Promise<void> {
     if (this.isJumping) return;
-
     this.isJumping = true;
 
+    // anchor: change to center for the jump
+    const startX = this.x;
+    const startY = this.y;
+    this.anchor.set(0.5, 0.5);
+
+    const yOffset = this.height / 2;
     this.setState('jump');
 
-    // anchor center for jump
-    this.anchor.set(0.5, 0.5);
-    const halfHeight = this.height / 2;
-    const startYAdjusted = fromY - halfHeight;
-    const endYAdjusted = toY - halfHeight;
-
-    const startTime = performance.now();
+    const config: JumpConfig = {
+      from: { x: startX, y: startY - yOffset },
+      to: { x: targetX, y: targetY - yOffset },
+      duration,
+      jumpHeight: 150 * Math.abs(this.scale.y)
+    };
 
     return new Promise((resolve) => {
-      const animate = () => {
-        const now = performance.now();
-        const elapsed = now - startTime;
+      const startTime = performance.now();
+
+      const update = () => {
+        const elapsed = performance.now() - startTime;
         const progress = Math.min(elapsed / duration, 1);
 
-        const isComplete = this.updateJumpAnimation(progress, fromX, startYAdjusted, toX, endYAdjusted);
+        const { x, y, rotation } = JumpAnimator.getTransform(progress, config);
 
-        if (isComplete) {
-          PIXI.Ticker.shared.remove(animate);
+        this.x = x;
+        this.y = y;
+        this.rotation = rotation;
 
-          // anchor bottom (start position)
-          this.anchor.set(0.5, 1);
-          this.x = toX;
-          this.y = toY;
-          this.rotation = 0;
-
-          this.setState('idle');
-          this.isJumping = false;
-
+        if (progress < 1) {
+          requestAnimationFrame(update);
+        } else {
+          this.onJumpComplete(targetX, targetY);
           resolve();
         }
       };
 
-      PIXI.Ticker.shared.add(animate);
+      update();
     });
   }
 
-  private updateJumpAnimation(progress: number, startX: number, startY: number, endX: number, endY: number): boolean {
-    const t = progress;
-
-    const currentLineX = startX + (endX - startX) * t;
-    const currentLineY = startY + (endY - startY) * t;
-
-    const jumpHeight = 150 * Math.abs(this.scale.y);
-    const arc = Math.sin(t * Math.PI) * jumpHeight;
-
-    this.x = currentLineX;
-    this.y = currentLineY - arc;
-
-    const direction = endX > startX ? 1 : -1;
-    this.rotation = t * Math.PI * 2 * direction;
-
-    return progress >= 1;
+  private onJumpComplete(finalX: number, finalY: number): void {
+    this.isJumping = false;
+    this.rotation = 0;
+    // anchor: return to bottom
+    this.anchor.set(0.5, 1);
+    this.x = finalX;
+    this.y = finalY;
+    this.setState('idle');
   }
 }

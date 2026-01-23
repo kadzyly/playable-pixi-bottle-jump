@@ -76,7 +76,7 @@ export class MainScene {
   private createEntities(): void {
     this.shelf = new Shelf();
     this.sofa = new Sofa();
-    this.character = new Character(this.app);
+    this.character = new Character();
 
     this.app.stage.addChild(this.shelf, this.sofa, this.character);
   }
@@ -103,7 +103,7 @@ export class MainScene {
       const toY = this.character.y;
       this.character.y = tempY;
 
-      this.character.jumpToSofa(fromX, fromY, toX, toY, 1000);
+      this.character.jumpTo(toX, toY);
     } else {
       sdk.install();
     }
