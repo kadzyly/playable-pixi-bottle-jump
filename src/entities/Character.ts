@@ -3,7 +3,6 @@ import * as PIXI from 'pixi.js';
 export class Character extends PIXI.AnimatedSprite {
   private readonly footOffsetY = -20;
   private isJumping = false;
-  private readonly jumpTicker?: PIXI.Ticker;
 
   constructor(app?: PIXI.Application) {
     const spritesheet = PIXI.Cache.get('imposterSheet') as PIXI.Spritesheet;
@@ -42,10 +41,6 @@ export class Character extends PIXI.AnimatedSprite {
     this.anchor.set(0.5, 1);
     this.animationSpeed = 0.3;
     this.play();
-
-    if (app) {
-      this.jumpTicker = app.ticker;
-    }
   }
 
   placeOn(surfaceY: number): void {
@@ -56,8 +51,15 @@ export class Character extends PIXI.AnimatedSprite {
     if (this.isJumping) return;
 
     this.isJumping = true;
-    this.animationSpeed = 0.5; // increase speed for jump animation
-    this.gotoAndPlay(0); // start roll
+
+    // anchor center for jump
+    this.anchor.set(0.5, 0.5);
+    const halfHeight = this.height / 2;
+    const startYAdjusted = fromY - halfHeight;
+    const endYAdjusted = toY - halfHeight;
+
+    this.animationSpeed = 0.5;
+    this.play();
 
     const startTime = performance.now();
 
@@ -67,17 +69,18 @@ export class Character extends PIXI.AnimatedSprite {
         const elapsed = now - startTime;
         const progress = Math.min(elapsed / duration, 1);
 
-        const isComplete = this.updateJumpAnimation(progress, fromX, fromY, toX, toY);
+        const isComplete = this.updateJumpAnimation(progress, fromX, startYAdjusted, toX, endYAdjusted);
 
         if (isComplete) {
-          // stop timer
           PIXI.Ticker.shared.remove(animate);
 
+          // anchor bottom (start position)
+          this.anchor.set(0.5, 1);
           this.x = toX;
           this.y = toY;
           this.rotation = 0;
-          this.animationSpeed = 0.3; // return to normal speed
-          this.gotoAndStop(0); // stop roll
+          this.animationSpeed = 0.3;
+          this.gotoAndStop(0);
           this.isJumping = false;
 
           resolve();
@@ -89,22 +92,20 @@ export class Character extends PIXI.AnimatedSprite {
   }
 
   private updateJumpAnimation(progress: number, startX: number, startY: number, endX: number, endY: number): boolean {
-    const easeProgress = this.easeInOutQuad(progress);
+    const t = progress;
 
-    this.x = startX + (endX - startX) * easeProgress;
+    const currentLineX = startX + (endX - startX) * t;
+    const currentLineY = startY + (endY - startY) * t;
 
-    // calculate jump height and Y-offset
-    const jumpHeight = 150 * this.scale.y;
-    const yOffset = Math.sin(progress * Math.PI) * jumpHeight;
-    this.y = startY + (endY - startY) * easeProgress - yOffset;
+    const jumpHeight = 150 * Math.abs(this.scale.y);
+    const arc = Math.sin(t * Math.PI) * jumpHeight;
 
-    // calculate rotation (360-degree flip)
-    this.rotation = progress * Math.PI * 2;
+    this.x = currentLineX;
+    this.y = currentLineY - arc;
+
+    const direction = endX > startX ? 1 : -1;
+    this.rotation = t * Math.PI * 2 * direction;
 
     return progress >= 1;
-  }
-
-  private easeInOutQuad(t: number): number {
-    return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
   }
 }
