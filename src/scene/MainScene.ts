@@ -6,7 +6,8 @@ import { Sofa } from '../entities/Sofa';
 import { Dust } from '../entities/Dust';
 
 export class MainScene {
-  private background: PIXI.TilingSprite;
+  private floorBg: PIXI.TilingSprite;
+  private wallBg: PIXI.TilingSprite;
   private character: Character;
   private shelf: Shelf;
   private sofa: Sofa;
@@ -19,37 +20,46 @@ export class MainScene {
   }
 
   public resize(width: number, height: number): void {
-    if (!this.background) return;
+    if (!this.floorBg || !this.wallBg) return;
 
-    // background
-    const bgScale = height / this.background.texture.height;
-    this.background.scale.set(bgScale);
-    this.background.width = width / bgScale;
-    this.background.position.set(0, height);
+    const floorTexture = this.floorBg.texture;
+    const wallTexture = this.wallBg.texture;
 
-    // floor
-    const floorHeightOnBackgroundImage = 367;
-    const floorY = height - floorHeightOnBackgroundImage * bgScale;
+    const totalTextureHeight = floorTexture.height + wallTexture.height;
+    const bgScale = height / totalTextureHeight;
 
-    // offsets
-    const shelfOffset = 350 * bgScale;
-    const sofaOffset = 200 * bgScale;
+    this.floorBg.scale.set(bgScale);
+    this.wallBg.scale.set(bgScale);
 
-    // calculate scale
+    const wallHeight = wallTexture.height * bgScale;
+    const floorHeight = floorTexture.height * bgScale;
+
+    this.floorBg.width = width / bgScale;
+    this.floorBg.position.set(0, height);
+
+    this.wallBg.width = width / bgScale;
+    this.wallBg.position.set(0, height - floorHeight);
+
     const entityScale = Math.min(width / 400, height / 600) * 0.5;
 
-    // scale
+    // position between wall and floor
+    const floorY = height - floorHeight;
+
     this.character.scale.set(entityScale);
     this.shelf.scale.set(entityScale);
     this.sofa.scale.set(entityScale);
 
+    // place on center of the wall
     this.shelf.x = width * 0.25;
-    this.shelf.placeOn(floorY - shelfOffset);
+    this.shelf.placeOn(wallHeight / 2);
+
+    // place sofa on top of the floor
+    const sofaHeight = this.sofa.height;
+    const sofaTargetY = floorY - sofaHeight + sofaHeight * 0.3;
 
     this.sofa.x = width * 0.7;
-    this.sofa.placeOn(floorY - sofaOffset);
+    this.sofa.placeOn(sofaTargetY);
 
-    // character position
     if (this.interactionCount === 0) {
       this.character.x = this.shelf.x;
       this.character.placeOn(this.shelf.y);
@@ -60,18 +70,28 @@ export class MainScene {
   }
 
   private createBackground(): void {
-    const texture = PIXI.Assets.get('bg');
-    texture.source.addressModeX = 'repeat';
+    const floorTexture = PIXI.Assets.get('bgFloor');
+    const wallTexture = PIXI.Assets.get('bgWall');
 
-    this.background = new PIXI.TilingSprite({
-      texture,
+    floorTexture.source.addressModeX = 'repeat';
+    wallTexture.source.addressModeX = 'repeat';
+
+    this.floorBg = new PIXI.TilingSprite({
+      texture: floorTexture,
       width: 1,
-      height: texture.height
+      height: floorTexture.height
     });
 
-    // position: left bottom
-    this.background.anchor.set(0, 1);
-    this.app.stage.addChild(this.background);
+    this.wallBg = new PIXI.TilingSprite({
+      texture: wallTexture,
+      width: 1,
+      height: wallTexture.height
+    });
+
+    this.floorBg.anchor.set(0, 1);
+    this.wallBg.anchor.set(0, 1);
+
+    this.app.stage.addChild(this.wallBg, this.floorBg);
   }
 
   private createEntities(): void {
