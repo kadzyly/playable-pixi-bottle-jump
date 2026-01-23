@@ -25,8 +25,16 @@ export class Character extends PIXI.AnimatedSprite {
     this.setState('idle');
   }
 
-  public getFootY(): number {
+  public get footY(): number {
     return this.y + this.footOffsetY * this.scale.y;
+  }
+
+  public set footY(value: number) {
+    this.y = value + this.footOffsetY * this.scale.y;
+  }
+
+  public placeOn(surfaceY: number): void {
+    this.footY = surfaceY;
   }
 
   public setState(state: CharacterState): void {
@@ -35,10 +43,6 @@ export class Character extends PIXI.AnimatedSprite {
     this.animationSpeed = config.speed;
     this.loop = config.loop;
     this.gotoAndPlay(0);
-  }
-
-  placeOn(surfaceY: number): void {
-    this.y = surfaceY + this.footOffsetY * this.scale.y;
   }
 
   public async jumpTo(targetX: number, targetY: number, duration: number = 1000): Promise<void> {

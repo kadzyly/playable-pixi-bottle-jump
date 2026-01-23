@@ -115,7 +115,7 @@ export class MainScene {
       this.character.y = tempY;
 
       void this.character.jumpTo(toX, toY).then(() => {
-        this.spawnDustUnderCharacter(this.character.x, this.character.getFootY());
+        this.spawnDustUnderCharacter(this.character.x, this.character.footY);
       });
     } else {
       sdk.install();
