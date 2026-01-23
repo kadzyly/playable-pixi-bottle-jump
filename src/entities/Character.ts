@@ -5,7 +5,7 @@ import { CHARACTER_ANIMATIONS } from './CharacterConfig';
 type CharacterState = keyof typeof CHARACTER_ANIMATIONS;
 
 export class Character extends PIXI.AnimatedSprite {
-  private readonly footOffsetY = -20;
+  private readonly footOffsetY = 20;
   private isJumping = false;
   private textureCache: Record<string, PIXI.Texture[]> = {};
 
@@ -25,6 +25,10 @@ export class Character extends PIXI.AnimatedSprite {
     this.setState('idle');
   }
 
+  public getFootY(): number {
+    return this.y + this.footOffsetY * this.scale.y;
+  }
+
   public setState(state: CharacterState): void {
     const config = CHARACTER_ANIMATIONS[state];
     this.textures = this.textureCache[state];
@@ -34,7 +38,7 @@ export class Character extends PIXI.AnimatedSprite {
   }
 
   placeOn(surfaceY: number): void {
-    this.y = surfaceY - this.footOffsetY * this.scale.y;
+    this.y = surfaceY + this.footOffsetY * this.scale.y;
   }
 
   public async jumpTo(targetX: number, targetY: number, duration: number = 1000): Promise<void> {

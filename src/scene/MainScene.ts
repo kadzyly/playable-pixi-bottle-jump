@@ -94,11 +94,13 @@ export class MainScene {
   private spawnDustUnderCharacter(x: number, y: number): void {
     const dust = new Dust();
     const scale = this.character.scale.x;
+    const offsetY = 10;
+    const finalY = y + offsetY;
 
     const characterIndex = this.app.stage.getChildIndex(this.character);
     this.app.stage.addChildAt(dust, Math.max(0, characterIndex));
 
-    dust.playAt(x, y, scale);
+    dust.playAt(x, finalY, scale);
   }
 
   private onClick(): void {
@@ -113,7 +115,7 @@ export class MainScene {
       this.character.y = tempY;
 
       void this.character.jumpTo(toX, toY).then(() => {
-        this.spawnDustUnderCharacter(this.character.x, this.character.y);
+        this.spawnDustUnderCharacter(this.character.x, this.character.getFootY());
       });
     } else {
       sdk.install();
