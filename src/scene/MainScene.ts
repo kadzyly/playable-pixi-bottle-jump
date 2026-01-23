@@ -55,7 +55,7 @@ export class MainScene {
 
     // place sofa on top of the floor
     const sofaHeight = this.sofa.height;
-    const sofaTargetY = floorY - sofaHeight + sofaHeight * 0.3;
+    const sofaTargetY = floorY + sofaHeight * 0.3;
 
     this.sofa.x = width * 0.7;
     this.sofa.placeOn(sofaTargetY);
@@ -64,8 +64,9 @@ export class MainScene {
       this.character.x = this.shelf.x;
       this.character.placeOn(this.shelf.y);
     } else {
+      const sofaTopY = sofaTargetY - this.sofa.height;
       this.character.x = this.sofa.x;
-      this.character.placeOn(this.sofa.y);
+      this.character.placeOn(sofaTopY);
     }
   }
 
@@ -127,11 +128,11 @@ export class MainScene {
     if (this.interactionCount === 0) {
       // find coordinates for character to jump from shelf to sofa
       const toX = this.sofa.x;
+      const toY = this.sofa.y - this.sofa.height;
 
       // find the Y position before jump
       const tempY = this.character.y;
-      this.character.placeOn(this.sofa.y);
-      const toY = this.character.y;
+      this.character.placeOn(toY);
       this.character.y = tempY;
 
       void this.character.jumpTo(toX, toY).then(() => {
