@@ -1,12 +1,21 @@
-# Playable Template with PixiJS
+# Playable pixi bottle jump
+Simple playable ad made with `Pixi.js`, `@smoud/playable-sdk` and `Playable Template with PixiJS`   
+
+![ScreenShot_20260126074432](https://github.com/user-attachments/assets/dc1e4f80-4078-4093-b5dc-ed62ed7780bc)  
+
+## Demo  
+Try out: https://kadzyly.github.io/playable-pixi-bottle-jump/ 
+
+---
+## Playable Template with PixiJS
 
 A starter template for creating playable ads using PixiJS with TypeScript support. This template combines:
 
 - [PixiJS](https://pixijs.com/) - Fast, flexible 2D WebGL renderer
 - [@smoud/playable-sdk](https://github.com/smoudjs/playable-sdk#readme) - SDK for creating playable ads with standardized events and methods
-- [@smoud/playable-scripts](https://github.com/smoudjs/playable-scripts#readme) - Build and development tools optimized for playable ads
+- [@smoud/playable-scripts](https://github.com/smoudjs/playable-scripts#readme) - Build and development tools optimized for playable ads  
 
-## Demo
+## Demo template
 
 Try out this template:
 - [View on CodePen](https://codepen.io/peter-hutsul/pen/PwoEaWR)
